@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -o nounset
+set -o errtrace
+set -o errexit
+set -o pipefail
+
+progname=${0##*/}
+libdir=$(dirname $0)
+url=${1}
+
+tempdir=$(mktemp -d /tmp/$progname.XXXXXX)
+function cleanup() {
+  rm -rf $tempdir
+}
+trap cleanup INT EXIT
+
+# cd $tempdir
+
+rm -vf url1.png url2.png
+time phantomjs $libdir/grab.js $url
+
+rm -vf url1_cropped.png
+convert +repage url1.png -extent 1366x5000+0+0 +repage url1_cropped.png
+
+rm -vf url2_cropped.png
+convert +repage url2.png -extent 1366x5000+0+0 +repage url2_cropped.png
+
+rm -vf diff.png
+compare url1_cropped.png url2_cropped.png diff.png
+
+open diff.png
